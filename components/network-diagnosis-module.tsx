@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Network,
@@ -23,6 +22,7 @@ import {
   Download,
   Copy,
 } from "lucide-react"
+import { UniversalQueryAnimation } from "@/components/universal-query-animation"
 
 interface DiagnosisResult {
   id: string
@@ -386,13 +386,21 @@ export function NetworkDiagnosisModule() {
           </div>
 
           {isRunning && (
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-                <span>诊断进度</span>
-                <span>{Math.round(progress)}%</span>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+              <div className="flex justify-center">
+                <UniversalQueryAnimation
+                  size="lg"
+                  progress={progress}
+                  showProgress={true}
+                  showText={true}
+                  text="正在进行连通性测试"
+                  subText="检测网络连接状态..."
+                  variant="scan"
+                  color="blue"
+                  icon={<Network className="w-12 h-12 text-blue-600" />}
+                />
               </div>
-              <Progress value={progress} className="w-full" />
-            </div>
+            </motion.div>
           )}
         </CardContent>
       </Card>

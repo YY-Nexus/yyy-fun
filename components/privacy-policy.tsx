@@ -113,7 +113,7 @@ export function PrivacyPolicy({ showHeader = true, compact = false }: PrivacyPol
         </CardContent>
       </Card>
 
-      <div className={`space-y-4 ${compact ? "max-h-96 overflow-y-auto" : ""}`}>
+      <div className={`space-y-4 ${compact ? "" : ""}`}>
         {sections.map((section, index) => (
           <Card key={section.id}>
             <CardHeader className="pb-3">

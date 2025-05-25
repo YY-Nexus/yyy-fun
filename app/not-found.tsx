@@ -3,14 +3,14 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Home, Search } from "lucide-react"
-import { ResponsiveLogo } from "@/components/responsive-logo"
+import { BrandLogo } from "@/components/brand-logo"
 
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <ResponsiveLogo size="md" showText={true} interactive={false} className="justify-center mb-4" />
+          <BrandLogo size="md" showText={true} interactive={false} className="justify-center mb-4" />
           <CardTitle className="text-2xl">页面未找到</CardTitle>
           <CardDescription>抱歉，您访问的页面不存在</CardDescription>
         </CardHeader>

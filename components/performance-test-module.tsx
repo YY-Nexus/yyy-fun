@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, Activity, Zap, Clock, Play, BarChart3 } from "lucide-react"
+import { UniversalQueryAnimation } from "@/components/universal-query-animation"
 
 interface PerformanceMetrics {
   latency: number
@@ -99,9 +100,17 @@ export function PerformanceTestModule() {
           {isRunning && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
               <div className="text-center">
-                <div className="text-lg font-semibold mb-2">正在测试网络性能...</div>
-                <Progress value={progress} className="w-full max-w-md mx-auto" />
-                <div className="text-sm text-muted-foreground mt-2">{progress}% 完成</div>
+                <UniversalQueryAnimation
+                  size="xl"
+                  progress={progress}
+                  showProgress={true}
+                  showText={true}
+                  text="正在测试网络性能"
+                  subText="评估延迟、吞吐量和稳定性..."
+                  variant="wave"
+                  color="green"
+                  icon={<TrendingUp className="w-12 h-12 text-green-600" />}
+                />
               </div>
             </motion.div>
           )}

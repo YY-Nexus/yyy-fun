@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Download, Upload, Wifi, Clock, TrendingUp, Play, Square } from "lucide-react"
-import { LogoProgress } from "@/components/logo-progress"
 import { FeatureGuard } from "@/components/feature-guard"
+import { UniversalQueryAnimation } from "@/components/universal-query-animation"
 
 interface SpeedTestResult {
   downloadSpeed: number
@@ -23,22 +23,33 @@ function SpeedTestContent() {
   const [currentTest, setCurrentTest] = useState<"download" | "upload" | "ping" | null>(null)
   const [result, setResult] = useState<SpeedTestResult | null>(null)
   const [history, setHistory] = useState<SpeedTestResult[]>([])
+  const [testStartTime, setTestStartTime] = useState<number>(0)
+
+  // 测试阶段配置
+  const testPhases = {
+    ping: { duration: 2000, weight: 33 },
+    download: { duration: 3000, weight: 33 },
+    upload: { duration: 3000, weight: 34 },
+  }
+
+  const totalDuration = Object.values(testPhases).reduce((sum, phase) => sum + phase.duration, 0)
 
   const startSpeedTest = async () => {
     setIsRunning(true)
     setProgress(0)
     setResult(null)
+    setTestStartTime(Date.now())
 
     try {
       // Ping测试
       setCurrentTest("ping")
       const pingResult = await simulatePingTest()
-      setProgress(33)
+      setProgress(testPhases.ping.weight)
 
       // 下载测试
       setCurrentTest("download")
       const downloadResult = await simulateDownloadTest()
-      setProgress(66)
+      setProgress(testPhases.ping.weight + testPhases.download.weight)
 
       // 上传测试
       setCurrentTest("upload")
@@ -64,22 +75,70 @@ function SpeedTestContent() {
     }
   }
 
+  // 实时更新进度的模拟函数
   const simulatePingTest = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    return {
-      ping: Math.random() * 50 + 10,
-      jitter: Math.random() * 10 + 1,
-    }
+    const startTime = Date.now()
+    const duration = testPhases.ping.duration
+
+    return new Promise<{ ping: number; jitter: number }>((resolve) => {
+      const updateProgress = () => {
+        const elapsed = Date.now() - startTime
+        const phaseProgress = Math.min((elapsed / duration) * testPhases.ping.weight, testPhases.ping.weight)
+        setProgress(phaseProgress)
+
+        if (elapsed < duration) {
+          requestAnimationFrame(updateProgress)
+        } else {
+          resolve({
+            ping: Math.random() * 50 + 10,
+            jitter: Math.random() * 10 + 1,
+          })
+        }
+      }
+      updateProgress()
+    })
   }
 
   const simulateDownloadTest = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-    return Math.random() * 900 + 100
+    const startTime = Date.now()
+    const duration = testPhases.download.duration
+    const baseProgress = testPhases.ping.weight
+
+    return new Promise<number>((resolve) => {
+      const updateProgress = () => {
+        const elapsed = Date.now() - startTime
+        const phaseProgress = Math.min((elapsed / duration) * testPhases.download.weight, testPhases.download.weight)
+        setProgress(baseProgress + phaseProgress)
+
+        if (elapsed < duration) {
+          requestAnimationFrame(updateProgress)
+        } else {
+          resolve(Math.random() * 900 + 100)
+        }
+      }
+      updateProgress()
+    })
   }
 
   const simulateUploadTest = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-    return Math.random() * 500 + 50
+    const startTime = Date.now()
+    const duration = testPhases.upload.duration
+    const baseProgress = testPhases.ping.weight + testPhases.download.weight
+
+    return new Promise<number>((resolve) => {
+      const updateProgress = () => {
+        const elapsed = Date.now() - startTime
+        const phaseProgress = Math.min((elapsed / duration) * testPhases.upload.weight, testPhases.upload.weight)
+        setProgress(baseProgress + phaseProgress)
+
+        if (elapsed < duration) {
+          requestAnimationFrame(updateProgress)
+        } else {
+          resolve(Math.random() * 500 + 50)
+        }
+      }
+      updateProgress()
+    })
   }
 
   const getSpeedColor = (speed: number) => {
@@ -98,13 +157,39 @@ function SpeedTestContent() {
   const getTestStatusText = () => {
     switch (currentTest) {
       case "ping":
-        return "正在测试网络延迟..."
+        return "正在测试网络延迟"
       case "download":
-        return "正在测试下载速度..."
+        return "正在测试下载速度"
       case "upload":
-        return "正在测试上传速度..."
+        return "正在测试上传速度"
       default:
-        return "准备开始测速..."
+        return "准备开始测速"
+    }
+  }
+
+  const getTestIcon = () => {
+    switch (currentTest) {
+      case "ping":
+        return <Wifi className="w-12 h-12 text-purple-600" />
+      case "download":
+        return <Download className="w-12 h-12 text-blue-600" />
+      case "upload":
+        return <Upload className="w-12 h-12 text-green-600" />
+      default:
+        return null
+    }
+  }
+
+  const getTestColor = () => {
+    switch (currentTest) {
+      case "ping":
+        return "purple"
+      case "download":
+        return "blue"
+      case "upload":
+        return "green"
+      default:
+        return "cyan"
     }
   }
 
@@ -125,9 +210,15 @@ function SpeedTestContent() {
           <div className="text-center space-y-6">
             {!isRunning && !result && (
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
-                <LogoProgress progress={0} variant="circular" size="xl" showProgress={false}>
-                  <div className="text-lg font-semibold text-gray-600 mt-4">点击开始测速</div>
-                </LogoProgress>
+                <UniversalQueryAnimation
+                  size="lg"
+                  showProgress={false}
+                  showText={false}
+                  variant="minimal"
+                  color="cyan"
+                  isActive={false}
+                />
+                <div className="text-lg font-semibold text-gray-600 mt-4">点击开始测速</div>
                 <Button onClick={startSpeedTest} size="lg" className="px-8">
                   <Play className="w-5 h-5 mr-2" />
                   开始测速
@@ -137,9 +228,19 @@ function SpeedTestContent() {
 
             {isRunning && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                <LogoProgress progress={progress} variant="glow" size="xl" showProgress={true}>
-                  <div className="text-lg font-semibold text-blue-600 mt-4">{getTestStatusText()}</div>
-                </LogoProgress>
+                <UniversalQueryAnimation
+                  size="xl"
+                  showProgress={true}
+                  progress={progress}
+                  showText={true}
+                  text={getTestStatusText()}
+                  subText="正在连接测速服务器..."
+                  variant="glow"
+                  color={getTestColor() as any}
+                  icon={getTestIcon()}
+                  duration={totalDuration / 1000} // 转换为秒
+                  isActive={true}
+                />
                 <Button onClick={() => setIsRunning(false)} variant="outline">
                   <Square className="w-4 h-4 mr-2" />
                   停止测试

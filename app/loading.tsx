@@ -1,15 +1,21 @@
-"use client"
-
-import { LogoProgress } from "@/components/logo-progress"
+import { UniversalQueryAnimation } from "@/components/universal-query-animation"
+import { StaticTechBackground } from "@/components/static-tech-background"
 
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-      <div className="text-center">
-        <LogoProgress progress={75} variant="glow" size="xl" showProgress={false}>
-          <div className="text-lg font-semibold text-blue-600 mt-4">正在加载应用...</div>
-        </LogoProgress>
+    <StaticTechBackground variant="minimal">
+      <div className="min-h-screen flex items-center justify-center">
+        <UniversalQueryAnimation
+          size="hero"
+          progress={75}
+          showProgress={true}
+          showText={true}
+          text="正在加载应用"
+          subText="YYC³ NetTrack 网络监测平台"
+          variant="glow"
+          color="cyan"
+        />
       </div>
-    </div>
+    </StaticTechBackground>
   )
 }

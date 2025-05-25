@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { ResponsiveLogo } from "@/components/responsive-logo"
+import { BrandLogo } from "@/components/brand-logo"
+import { Enhanced3DIcon } from "@/components/enhanced-3d-icon"
 import { Menu, X, Wifi, WifiOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -78,14 +78,8 @@ export function EnhancedHeader({ onLogoClick, currentModule, className }: Enhanc
     >
       <div className="container mx-auto px-4 py-3 md:py-4">
         <div className="flex items-center justify-between">
-          {/* Logo区域 */}
-          <ResponsiveLogo
-            size="md"
-            showText={true}
-            interactive={true}
-            onClick={onLogoClick}
-            className="flex-shrink-0"
-          />
+          {/* 品牌LOGO区域 */}
+          <BrandLogo size="md" showText={true} interactive={true} onClick={onLogoClick} />
 
           {/* 中间信息区域 - 桌面端显示 */}
           <div className="hidden md:flex items-center gap-4">
@@ -119,7 +113,13 @@ export function EnhancedHeader({ onLogoClick, currentModule, className }: Enhanc
                 )}
               >
                 <motion.div className="flex items-center gap-1">
-                  {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                  <Enhanced3DIcon
+                    icon={isOnline ? Wifi : WifiOff}
+                    size="sm"
+                    color={isOnline ? "text-green-600" : "text-red-600"}
+                    bgColor={isOnline ? "bg-green-50" : "bg-red-50"}
+                    interactive={false}
+                  />
                   <span className="hidden sm:inline">{isOnline ? "在线运行" : "离线状态"}</span>
                   <span className="sm:hidden">{isOnline ? "在线" : "离线"}</span>
                 </motion.div>
@@ -127,16 +127,15 @@ export function EnhancedHeader({ onLogoClick, currentModule, className }: Enhanc
             </motion.div>
 
             {/* 移动端菜单按钮 */}
-            <Button
-              variant="ghost"
+            <Enhanced3DIcon
+              icon={isMobileMenuOpen ? X : Menu}
               size="sm"
-              className="md:hidden"
+              color="text-gray-600"
+              bgColor="bg-gray-50"
+              interactive={true}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              <motion.div animate={{ rotate: isMobileMenuOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
-                {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-              </motion.div>
-            </Button>
+              className="md:hidden"
+            />
           </div>
         </div>
 
