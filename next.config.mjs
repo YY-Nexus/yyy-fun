@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['nodemailer']
-  },
+  serverExternalPackages: ['nodemailer'],
   env: {
     FEEDBACK_EMAIL: process.env.FEEDBACK_EMAIL,
     SMTP_HOST: process.env.SMTP_HOST,

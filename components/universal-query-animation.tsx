@@ -17,8 +17,8 @@ interface UniversalQueryAnimationProps {
   onComplete?: () => void
   icon?: React.ReactNode
   color?: "blue" | "green" | "purple" | "orange" | "red" | "cyan"
-  duration?: number // 新增：总动画持续时间（秒）
-  isActive?: boolean // 新增：是否激活动画
+  duration?: number
+  isActive?: boolean
 }
 
 export function UniversalQueryAnimation({
@@ -33,7 +33,7 @@ export function UniversalQueryAnimation({
   onComplete,
   icon,
   color = "cyan",
-  duration = 10, // 默认10秒
+  duration = 10,
   isActive = true,
 }: UniversalQueryAnimationProps) {
   const sizeConfig = {
@@ -130,12 +130,12 @@ export function UniversalQueryAnimation({
 
   // 计算基于进度的动画参数
   const progressRatio = Math.min(progress / 100, 1)
-  const animationSpeed = isActive ? 1 : 0.3 // 激活时正常速度，否则慢速
+  const animationSpeed = isActive ? 1 : 0.5
 
   // 根据进度调整动画强度
   const getAnimationIntensity = () => {
-    if (!isActive) return 0.5
-    return 0.5 + progressRatio * 0.5 // 从0.5到1.0
+    if (!isActive) return 0.3
+    return 0.5 + progressRatio * 0.5
   }
 
   const animationIntensity = getAnimationIntensity()
@@ -151,18 +151,25 @@ export function UniversalQueryAnimation({
         <motion.div
           className={cn("flex items-center justify-center", config.logo)}
           animate={
-            variant !== "minimal" && isActive
+            isActive
               ? {
                   rotateY: [0, 12 * animationIntensity, -12 * animationIntensity, 0],
                   rotateX: [0, -6 * animationIntensity, 6 * animationIntensity, 0],
                   scale: [1, 1 + 0.05 * animationIntensity, 1],
                 }
-              : {}
+              : {
+                  rotateY: [0, 5, -5, 0],
+                  scale: [1, 1.02, 1],
+                }
           }
           transition={{
-            duration: duration * 0.4 * animationSpeed, // 动画时间与总时长同步
-            repeat: isActive ? Number.POSITIVE_INFINITY : 0,
+            duration: isActive ? duration * 0.4 * animationSpeed : 4,
+            repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
+          }}
+          style={{
+            perspective: "1000px",
+            transformStyle: "preserve-3d",
           }}
         >
           {icon}
@@ -185,17 +192,20 @@ export function UniversalQueryAnimation({
         <motion.div
           className="w-full h-full flex items-center justify-center"
           animate={
-            variant !== "minimal" && isActive
+            isActive
               ? {
                   rotateY: [0, 12 * animationIntensity, -12 * animationIntensity, 0],
                   rotateX: [0, -6 * animationIntensity, 6 * animationIntensity, 0],
                   rotateZ: [0, 2 * animationIntensity, -2 * animationIntensity, 0],
                 }
-              : {}
+              : {
+                  rotateY: [0, 8, -8, 0],
+                  rotateX: [0, -4, 4, 0],
+                }
           }
           transition={{
-            duration: duration * 0.6 * animationSpeed, // 主logo动画时间
-            repeat: isActive ? Number.POSITIVE_INFINITY : 0,
+            duration: isActive ? duration * 0.6 * animationSpeed : 6,
+            repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}
         >
@@ -204,7 +214,7 @@ export function UniversalQueryAnimation({
             alt="YYC³ Logo"
             className={cn("object-contain drop-shadow-2xl", config.logo)}
             animate={
-              variant === "pulse" && isActive
+              variant === "pulse"
                 ? {
                     scale: [1, 1 + 0.05 * animationIntensity, 1],
                     filter: [
@@ -213,7 +223,7 @@ export function UniversalQueryAnimation({
                       "brightness(1) saturate(1)",
                     ],
                   }
-                : variant === "glow" && isActive
+                : variant === "glow"
                   ? {
                       filter: [
                         `drop-shadow(0 0 ${10 * animationIntensity}px ${colors.glow})`,
@@ -221,21 +231,19 @@ export function UniversalQueryAnimation({
                         `drop-shadow(0 0 ${10 * animationIntensity}px ${colors.glow})`,
                       ],
                     }
-                  : isActive
-                    ? {
-                        scale: [1, 1 + 0.02 * animationIntensity, 1],
-                      }
-                    : {}
+                  : {
+                      scale: [1, 1 + 0.02 * animationIntensity, 1],
+                    }
             }
             transition={{
               duration: variant === "pulse" ? duration * 0.2 * animationSpeed : duration * 0.3 * animationSpeed,
-              repeat: isActive ? Number.POSITIVE_INFINITY : 0,
+              repeat: Number.POSITIVE_INFINITY,
               ease: "easeInOut",
             }}
           />
         </motion.div>
 
-        {/* 3D深度阴影 - 与进度同步 */}
+        {/* 3D深度阴影 - 持续显示 */}
         <motion.div
           className="absolute inset-0 z-0"
           style={{
@@ -243,16 +251,12 @@ export function UniversalQueryAnimation({
             filter: "blur(12px)",
             opacity: 0.4,
           }}
-          animate={
-            isActive
-              ? {
-                  opacity: [0.3, 0.3 + 0.2 * animationIntensity, 0.3],
-                }
-              : {}
-          }
+          animate={{
+            opacity: [0.3, 0.3 + 0.2 * animationIntensity, 0.3],
+          }}
           transition={{
             duration: duration * 0.4 * animationSpeed,
-            repeat: isActive ? Number.POSITIVE_INFINITY : 0,
+            repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}
         >
@@ -265,6 +269,25 @@ export function UniversalQueryAnimation({
             }}
           />
         </motion.div>
+
+        {/* 光晕效果 - 始终显示 */}
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          animate={{
+            backgroundImage: [
+              `radial-gradient(circle, ${colors.glow} 0%, transparent 70%)`,
+              `radial-gradient(circle, ${colors.secondary}40 0%, transparent 70%)`,
+              `radial-gradient(circle, ${colors.tertiary}30 0%, transparent 70%)`,
+              `radial-gradient(circle, ${colors.glow} 0%, transparent 70%)`,
+            ],
+            scale: [1, 1 + 0.1 * animationIntensity, 1],
+          }}
+          transition={{
+            duration: duration * 0.5 * animationSpeed,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+          }}
+        />
       </motion.div>
     )
   }
@@ -302,7 +325,6 @@ export function UniversalQueryAnimation({
           initial={{ strokeDashoffset: circumference }}
           animate={{
             strokeDashoffset: circumference - (progress / 100) * circumference,
-            // 进度环的脉动效果与进度同步
             strokeWidth: isActive ? [4, 4 + 2 * animationIntensity, 4] : 4,
           }}
           transition={{
@@ -316,8 +338,8 @@ export function UniversalQueryAnimation({
           className="drop-shadow-lg"
         />
 
-        {/* 扫描效果 - 速度与进度同步 */}
-        {variant === "scan" && isActive && (
+        {/* 扫描效果 */}
+        {variant === "scan" && (
           <motion.circle
             cx={config.ring / 2}
             cy={config.ring / 2}
@@ -328,7 +350,7 @@ export function UniversalQueryAnimation({
             strokeDasharray="10 20"
             animate={{ rotate: [0, 360] }}
             transition={{
-              duration: duration * 0.2 * animationSpeed, // 扫描速度与总时长同步
+              duration: duration * 0.2 * animationSpeed,
               repeat: Number.POSITIVE_INFINITY,
               ease: "linear",
             }}
@@ -347,7 +369,7 @@ export function UniversalQueryAnimation({
   }
 
   const renderWaveEffect = () => {
-    if (variant !== "wave" || !isActive) return null
+    if (variant !== "wave") return null
 
     return (
       <div className="absolute inset-0 overflow-hidden rounded-full">
@@ -363,9 +385,9 @@ export function UniversalQueryAnimation({
               opacity: [0.6 * animationIntensity, 0.3 * animationIntensity, 0],
             }}
             transition={{
-              duration: duration * 0.3 * animationSpeed, // 波浪效果与总时长同步
+              duration: duration * 0.3 * animationSpeed,
               repeat: Number.POSITIVE_INFINITY,
-              delay: i * (duration * 0.1 * animationSpeed), // 延迟也与时长同步
+              delay: i * (duration * 0.1 * animationSpeed),
               ease: "easeOut",
             }}
           />
@@ -382,28 +404,7 @@ export function UniversalQueryAnimation({
         {renderCenterContent()}
         {renderWaveEffect()}
 
-        {/* 光晕效果 - 强度与进度同步 */}
-        {variant === "glow" && isActive && (
-          <motion.div
-            className="absolute inset-0 rounded-full"
-            animate={{
-              backgroundImage: [
-                `radial-gradient(circle, ${colors.glow} 0%, transparent 70%)`,
-                `radial-gradient(circle, ${colors.secondary}${Math.floor(40 * animationIntensity).toString(16)} 0%, transparent 70%)`,
-                `radial-gradient(circle, ${colors.tertiary}${Math.floor(30 * animationIntensity).toString(16)} 0%, transparent 70%)`,
-                `radial-gradient(circle, ${colors.glow} 0%, transparent 70%)`,
-              ],
-              scale: [1, 1 + 0.2 * animationIntensity, 1],
-            }}
-            transition={{
-              duration: duration * 0.4 * animationSpeed,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "easeInOut",
-            }}
-          />
-        )}
-
-        {/* 进度百分比显示 - 动画与进度同步 */}
+        {/* 进度百分比显示 */}
         {showProgress && (
           <motion.div
             className={cn("absolute inset-0 flex items-center justify-center z-20", config.progress, "font-bold")}
@@ -415,35 +416,27 @@ export function UniversalQueryAnimation({
             <motion.div
               className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-lg border"
               style={{ borderColor: `${colors.primary}40` }}
-              animate={
-                isActive
-                  ? {
-                      scale: [1, 1 + 0.05 * animationIntensity, 1],
-                      boxShadow: [
-                        `0 4px 6px ${colors.glow}`,
-                        `0 ${6 + 6 * animationIntensity}px ${12 + 12 * animationIntensity}px ${colors.glow}`,
-                        `0 4px 6px ${colors.glow}`,
-                      ],
-                    }
-                  : {}
-              }
+              animate={{
+                scale: [1, 1 + 0.05 * animationIntensity, 1],
+                boxShadow: [
+                  `0 4px 6px ${colors.glow}`,
+                  `0 ${6 + 6 * animationIntensity}px ${12 + 12 * animationIntensity}px ${colors.glow}`,
+                  `0 4px 6px ${colors.glow}`,
+                ],
+              }}
               transition={{
                 duration: duration * 0.2 * animationSpeed,
-                repeat: isActive ? Number.POSITIVE_INFINITY : 0,
+                repeat: Number.POSITIVE_INFINITY,
                 ease: "easeInOut",
               }}
             >
               <motion.span
-                animate={
-                  isActive
-                    ? {
-                        color: [colors.primary, colors.secondary, colors.tertiary, colors.primary],
-                      }
-                    : {}
-                }
+                animate={{
+                  color: [colors.primary, colors.secondary, colors.tertiary, colors.primary],
+                }}
                 transition={{
                   duration: duration * 0.3 * animationSpeed,
-                  repeat: isActive ? Number.POSITIVE_INFINITY : 0,
+                  repeat: Number.POSITIVE_INFINITY,
                   ease: "easeInOut",
                 }}
               >
@@ -454,7 +447,7 @@ export function UniversalQueryAnimation({
         )}
       </div>
 
-      {/* 加载文字 - 动画速度与进度同步 */}
+      {/* 加载文字 */}
       {showText && (
         <motion.div
           className={cn("text-center", config.text)}
@@ -468,32 +461,28 @@ export function UniversalQueryAnimation({
               backgroundImage: `linear-gradient(45deg, ${colors.primary}, ${colors.secondary}, ${colors.tertiary})`,
               backgroundSize: "400% 400%",
             }}
-            animate={
-              isActive
-                ? {
-                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                  }
-                : {}
-            }
+            animate={{
+              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+            }}
             transition={{
               duration: duration * 0.3 * animationSpeed,
-              repeat: isActive ? Number.POSITIVE_INFINITY : 0,
+              repeat: Number.POSITIVE_INFINITY,
               ease: "easeInOut",
             }}
           >
             {text}
           </motion.span>
 
-          {/* 动态点点点 - 频率与进度同步 */}
+          {/* 动态点点点 */}
           <motion.span className="ml-1">
             {[0, 0.3, 0.6].map((delay, index) => (
               <motion.span
                 key={index}
                 style={{ color: colors.primary }}
-                animate={isActive ? { opacity: [0, 1, 0] } : { opacity: 0.5 }}
+                animate={{ opacity: [0, 1, 0] }}
                 transition={{
                   duration: duration * 0.15 * animationSpeed,
-                  repeat: isActive ? Number.POSITIVE_INFINITY : 0,
+                  repeat: Number.POSITIVE_INFINITY,
                   delay: delay * animationSpeed,
                   ease: "easeInOut",
                 }}
@@ -518,8 +507,8 @@ export function UniversalQueryAnimation({
         </motion.div>
       )}
 
-      {/* 装饰性粒子效果 - 活跃度与进度同步 */}
-      {variant !== "minimal" && isActive && (
+      {/* 装饰性粒子效果 */}
+      {variant !== "minimal" && (
         <div className="absolute inset-0 pointer-events-none">
           {Array.from({ length: 8 }, (_, i) => (
             <motion.div

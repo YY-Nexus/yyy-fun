@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -20,41 +20,52 @@ interface SpeedTestResult {
 function SpeedTestContent() {
   const [isRunning, setIsRunning] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [currentTest, setCurrentTest] = useState<"download" | "upload" | "ping" | null>(null)
+  const [currentTest, setCurrentTest] = useState<"ping" | "download" | "upload" | null>(null)
   const [result, setResult] = useState<SpeedTestResult | null>(null)
   const [history, setHistory] = useState<SpeedTestResult[]>([])
   const [testStartTime, setTestStartTime] = useState<number>(0)
+  const [animationDuration, setAnimationDuration] = useState(10) // 动画总时长
 
-  // 测试阶段配置
+  // 测试阶段配置 - 增加持续时间确保动画效果
   const testPhases = {
-    ping: { duration: 2000, weight: 33 },
-    download: { duration: 3000, weight: 33 },
-    upload: { duration: 3000, weight: 34 },
+    ping: { duration: 3000, weight: 25, label: "网络延迟测试" },
+    download: { duration: 5000, weight: 40, label: "下载速度测试" },
+    upload: { duration: 4000, weight: 35, label: "上传速度测试" },
   }
 
   const totalDuration = Object.values(testPhases).reduce((sum, phase) => sum + phase.duration, 0)
+
+  // 计算动画持续时间（秒）
+  useEffect(() => {
+    setAnimationDuration(totalDuration / 1000)
+  }, [totalDuration])
 
   const startSpeedTest = async () => {
     setIsRunning(true)
     setProgress(0)
     setResult(null)
+    setCurrentTest(null)
     setTestStartTime(Date.now())
 
     try {
+      // 初始化阶段
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
       // Ping测试
       setCurrentTest("ping")
       const pingResult = await simulatePingTest()
-      setProgress(testPhases.ping.weight)
 
       // 下载测试
       setCurrentTest("download")
       const downloadResult = await simulateDownloadTest()
-      setProgress(testPhases.ping.weight + testPhases.download.weight)
 
       // 上传测试
       setCurrentTest("upload")
       const uploadResult = await simulateUploadTest()
+
+      // 完成阶段
       setProgress(100)
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       const testResult: SpeedTestResult = {
         downloadSpeed: downloadResult,
@@ -75,18 +86,25 @@ function SpeedTestContent() {
     }
   }
 
-  // 实时更新进度的模拟函数
+  const stopSpeedTest = () => {
+    setIsRunning(false)
+    setCurrentTest(null)
+    setProgress(0)
+  }
+
+  // 改进的模拟函数 - 更平滑的进度更新
   const simulatePingTest = async () => {
     const startTime = Date.now()
     const duration = testPhases.ping.duration
+    const baseProgress = 0
 
     return new Promise<{ ping: number; jitter: number }>((resolve) => {
       const updateProgress = () => {
         const elapsed = Date.now() - startTime
         const phaseProgress = Math.min((elapsed / duration) * testPhases.ping.weight, testPhases.ping.weight)
-        setProgress(phaseProgress)
+        setProgress(baseProgress + phaseProgress)
 
-        if (elapsed < duration) {
+        if (elapsed < duration && isRunning) {
           requestAnimationFrame(updateProgress)
         } else {
           resolve({
@@ -110,7 +128,7 @@ function SpeedTestContent() {
         const phaseProgress = Math.min((elapsed / duration) * testPhases.download.weight, testPhases.download.weight)
         setProgress(baseProgress + phaseProgress)
 
-        if (elapsed < duration) {
+        if (elapsed < duration && isRunning) {
           requestAnimationFrame(updateProgress)
         } else {
           resolve(Math.random() * 900 + 100)
@@ -131,7 +149,7 @@ function SpeedTestContent() {
         const phaseProgress = Math.min((elapsed / duration) * testPhases.upload.weight, testPhases.upload.weight)
         setProgress(baseProgress + phaseProgress)
 
-        if (elapsed < duration) {
+        if (elapsed < duration && isRunning) {
           requestAnimationFrame(updateProgress)
         } else {
           resolve(Math.random() * 500 + 50)
@@ -155,6 +173,8 @@ function SpeedTestContent() {
   }
 
   const getTestStatusText = () => {
+    if (!isRunning) return "准备开始测速"
+
     switch (currentTest) {
       case "ping":
         return "正在测试网络延迟"
@@ -163,7 +183,22 @@ function SpeedTestContent() {
       case "upload":
         return "正在测试上传速度"
       default:
-        return "准备开始测速"
+        return "正在初始化测试"
+    }
+  }
+
+  const getTestSubText = () => {
+    if (!isRunning) return "点击开始按钮启动网络测速"
+
+    switch (currentTest) {
+      case "ping":
+        return "检测网络响应时间和稳定性..."
+      case "download":
+        return "测量从服务器下载数据的速度..."
+      case "upload":
+        return "测量向服务器上传数据的速度..."
+      default:
+        return "正在连接测速服务器..."
     }
   }
 
@@ -176,7 +211,7 @@ function SpeedTestContent() {
       case "upload":
         return <Upload className="w-12 h-12 text-green-600" />
       default:
-        return null
+        return <TrendingUp className="w-12 h-12 text-cyan-600" />
     }
   }
 
@@ -190,6 +225,19 @@ function SpeedTestContent() {
         return "green"
       default:
         return "cyan"
+    }
+  }
+
+  const getTestVariant = () => {
+    switch (currentTest) {
+      case "ping":
+        return "pulse"
+      case "download":
+        return "wave"
+      case "upload":
+        return "glow"
+      default:
+        return "scan"
     }
   }
 
@@ -208,48 +256,113 @@ function SpeedTestContent() {
       <Card className="relative overflow-hidden">
         <CardContent className="p-8">
           <div className="text-center space-y-6">
-            {!isRunning && !result && (
-              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
-                <UniversalQueryAnimation
-                  size="lg"
-                  showProgress={false}
-                  showText={false}
-                  variant="minimal"
-                  color="cyan"
-                  isActive={false}
-                />
-                <div className="text-lg font-semibold text-gray-600 mt-4">点击开始测速</div>
-                <Button onClick={startSpeedTest} size="lg" className="px-8">
-                  <Play className="w-5 h-5 mr-2" />
-                  开始测速
-                </Button>
-              </motion.div>
-            )}
+            {/* 始终显示动画组件，根据状态调整 */}
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
+              <UniversalQueryAnimation
+                size="xl"
+                showProgress={isRunning}
+                progress={progress}
+                showText={true}
+                text={getTestStatusText()}
+                subText={getTestSubText()}
+                variant={isRunning ? (getTestVariant() as any) : "default"}
+                color={getTestColor() as any}
+                icon={isRunning ? getTestIcon() : <TrendingUp className="w-12 h-12 text-cyan-600" />}
+                duration={animationDuration}
+                isActive={isRunning}
+              />
 
-            {isRunning && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                <UniversalQueryAnimation
-                  size="xl"
-                  showProgress={true}
-                  progress={progress}
-                  showText={true}
-                  text={getTestStatusText()}
-                  subText="正在连接测速服务器..."
-                  variant="glow"
-                  color={getTestColor() as any}
-                  icon={getTestIcon()}
-                  duration={totalDuration / 1000} // 转换为秒
-                  isActive={true}
-                />
-                <Button onClick={() => setIsRunning(false)} variant="outline">
-                  <Square className="w-4 h-4 mr-2" />
-                  停止测试
-                </Button>
-              </motion.div>
-            )}
+              {/* 测试阶段指示器 */}
+              {isRunning && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex justify-center space-x-4"
+                >
+                  {Object.entries(testPhases).map(([phase, config]) => (
+                    <div
+                      key={phase}
+                      className={`flex items-center space-x-2 px-3 py-1 rounded-full transition-all duration-300 ${
+                        currentTest === phase
+                          ? "bg-blue-100 border-2 border-blue-500"
+                          : progress >=
+                              (phase === "ping"
+                                ? 0
+                                : phase === "download"
+                                  ? testPhases.ping.weight
+                                  : testPhases.ping.weight + testPhases.download.weight)
+                            ? "bg-green-100 border-2 border-green-500"
+                            : "bg-gray-100 border-2 border-gray-300"
+                      }`}
+                    >
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          currentTest === phase
+                            ? "bg-blue-500 animate-pulse"
+                            : progress >=
+                                (phase === "ping"
+                                  ? 0
+                                  : phase === "download"
+                                    ? testPhases.ping.weight
+                                    : testPhases.ping.weight + testPhases.download.weight)
+                              ? "bg-green-500"
+                              : "bg-gray-400"
+                        }`}
+                      />
+                      <span
+                        className={`text-xs font-medium ${
+                          currentTest === phase
+                            ? "text-blue-700"
+                            : progress >=
+                                (phase === "ping"
+                                  ? 0
+                                  : phase === "download"
+                                    ? testPhases.ping.weight
+                                    : testPhases.ping.weight + testPhases.download.weight)
+                              ? "text-green-700"
+                              : "text-gray-600"
+                        }`}
+                      >
+                        {config.label}
+                      </span>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
 
-            {result && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+              {/* 控制按钮 */}
+              <div className="flex justify-center space-x-4">
+                {!isRunning && !result && (
+                  <Button onClick={startSpeedTest} size="lg" className="px-8">
+                    <Play className="w-5 h-5 mr-2" />
+                    开始测速
+                  </Button>
+                )}
+
+                {isRunning && (
+                  <Button onClick={stopSpeedTest} variant="outline" size="lg">
+                    <Square className="w-4 h-4 mr-2" />
+                    停止测试
+                  </Button>
+                )}
+
+                {result && !isRunning && (
+                  <Button onClick={startSpeedTest} variant="outline" size="lg">
+                    <Play className="w-4 h-4 mr-2" />
+                    重新测试
+                  </Button>
+                )}
+              </div>
+            </motion.div>
+
+            {/* 测试结果显示 */}
+            {result && !isRunning && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="space-y-6"
+              >
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <Card>
                     <CardContent className="p-4 text-center">
@@ -285,13 +398,10 @@ function SpeedTestContent() {
                   </Card>
                 </div>
 
-                <div className="flex items-center justify-center gap-4">
+                <div className="flex items-center justify-center">
                   <Badge className={getSpeedGrade(result.downloadSpeed).color}>
                     网络质量: {getSpeedGrade(result.downloadSpeed).grade}
                   </Badge>
-                  <Button onClick={startSpeedTest} variant="outline">
-                    重新测试
-                  </Button>
                 </div>
               </motion.div>
             )}
